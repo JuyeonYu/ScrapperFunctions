@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "staging": "news-scrap-b64dd"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
