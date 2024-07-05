@@ -45,6 +45,7 @@ const parsing = async (keyword) => {
       title: $(node).find(".news_tit:eq(0)").text(), // 뉴스제목 크롤링
       // press: $(node).find(".info_group > a").text(), // 출판사 크롤링
       time: timestamp, // 기사 작성 시간 크롤링
+      pubData: $(node).find(".info_group > span").text()
       // contents: $(node).find(".dsc_wrap").text(), // 기사 내용 크롤링
     });
   });
