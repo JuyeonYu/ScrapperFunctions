@@ -12,6 +12,26 @@ const getHTML = async(keyword) => {
   }
 }
 
+function relativeTimeToTimestamp(relativeTime) {
+  const currentDate = new Date();
+  
+  if (relativeTime.includes('분 전')) {
+      const minutesAgo = parseInt(relativeTime);
+      currentDate.setMinutes(currentDate.getMinutes() - minutesAgo);
+  } else if (relativeTime.includes('시간 전')) {
+      const hoursAgo = parseInt(relativeTime);
+      currentDate.setHours(currentDate.getHours() - hoursAgo);
+  } else if (relativeTime.includes('일 전')) {
+      const daysAgo = parseInt(relativeTime);
+      currentDate.setDate(currentDate.getDate() - daysAgo);
+  } else if (relativeTime.includes('주 전')) {
+      const weeksAgo = parseInt(relativeTime);
+      currentDate.setDate(currentDate.getDate() - (weeksAgo * 7));
+  }
+
+  return currentDate.getTime(); // Timestamp in milliseconds
+}
+
  // 파싱 함수
 const parsing = async (keyword) => {
   const html = await getHTML(keyword);
@@ -20,11 +40,12 @@ const parsing = async (keyword) => {
 
   let informations = [];
   $titlist.each((idx, node) => {
+    const timestamp = relativeTimeToTimestamp($(node).find(".info_group > span").text());
     informations.push({
       title: $(node).find(".news_tit:eq(0)").text(), // 뉴스제목 크롤링
-      press: $(node).find(".info_group > a").text(), // 출판사 크롤링
-      time: $(node).find(".info_group > span").text(), // 기사 작성 시간 크롤링
-      contents: $(node).find(".dsc_wrap").text(), // 기사 내용 크롤링
+      // press: $(node).find(".info_group > a").text(), // 출판사 크롤링
+      time: timestamp, // 기사 작성 시간 크롤링
+      // contents: $(node).find(".dsc_wrap").text(), // 기사 내용 크롤링
     });
   });
 
