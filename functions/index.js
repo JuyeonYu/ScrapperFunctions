@@ -17,6 +17,7 @@ const app = express();
 const admin = require('firebase-admin');
 const parsing = require('./fetchNewsService');
 const push = require('./pushNotiService');
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const db = admin.firestore();
 
 exports.api = functions.https.onRequest(app);
@@ -37,12 +38,18 @@ const initializeFirestore = async () => {
       k1: { 
         user_id: 'tester1',
         keyword: '애플', 
-        enable: true 
+        enable: true,
+        pushed_time: Date.now() - 100000
       },
       k2: { 
         user_id: 'tester1', 
         keyword: '삼성', 
         enable: false 
+      },
+      k3: { 
+        user_id: 'tester1', 
+        keyword: '구글', 
+        enable: true 
       },
     },
   };
@@ -60,6 +67,70 @@ const initializeFirestore = async () => {
 initializeFirestore();
 
 exports.test = onRequest(async (request, response) => {
+  try {
+    const usersSnapshot = await db.collection('user').where('fcm_token', '!=', null).get();
+    usersSnapshot.forEach(async userDoc => {
+      const userId = userDoc.id;
+      const deviceToken = userDoc.data().fcm_token;
+      console.log('----------', userId);
+      const keywordsSnapshots = await db.collection('keyword').where('user_id', '==', userId).get();
+      
+      keywordsSnapshots.forEach(keywordDoc => {
+        const keyword = keywordDoc.data().keyword;
+        const pushedTime = keywordDoc.data().pushed_time || 0;
+        console.log('-----------', keyword, '------------------');
+        parsing(keyword).then(async informations => {
+          console.log('-----------', informations['time'], '------------------');
+
+          informations.forEach(async information => {
+            if (information['time'] > pushedTime) {
+              let message = {
+                notification: {
+                  title: `${keyword}에서 새로운 뉴스가 도착했습니다.💛`,
+                  body: information['title'],
+                },
+                token: deviceToken,
+              };
+            
+              try {
+                const response = await admin.messaging().send(message);
+                console.log('Successfully sent message: ', response);
+                // write something on database
+              } catch (err) {
+                console.log('Error sending message: ', err);
+                // write something on database
+              }
+              console.log('---------------push--------------');
+              console.log(information);
+            } else {
+              console.log(`---------------no push--------------`, pushedTime);
+              console.log(information);
+            }
+          });
+
+          // response.json(informations);
+          
+          
+        }).catch(err => {
+          console.error(err);
+        });
+      });
+    });
+
+    response.status(200).json('keywords');
+  } catch (error) {
+    response.status(500).send(`Error getting users: ${error}`);
+  }
+});
+
+exports.scheduledFunction = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
+    console.log('Hello world');
+    return null;
+});
+
+
+
+exports.scheduledPushNoti = onSchedule("* * * * *", async (request, response) => {
   try {
     const usersSnapshot = await db.collection('user').where('fcm_token', '!=', null).get();
     usersSnapshot.forEach(async userDoc => {
