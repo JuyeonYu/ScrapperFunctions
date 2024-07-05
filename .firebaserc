@@ -1,6 +1,7 @@
 {
   "projects": {
-    "staging": "news-scrap-b64dd"
+    "staging": "news-scrap-b64dd",
+    "default": "news-scrap-b64dd"
   },
   "targets": {},
   "etags": {},

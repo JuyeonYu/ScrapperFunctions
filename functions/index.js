@@ -14,13 +14,40 @@ const logger = require("firebase-functions/logger");
 const functions = require('firebase-functions');
 const express = require('express');
 const app = express();
+const admin = require('firebase-admin');
 const parsing = require('./fetchNewsService');
 const push = require('./pushNotiService');
-
-
-
+const db = admin.firestore();
 
 exports.api = functions.https.onRequest(app);
+
+exports.test = onRequest(async (request, response) => {
+  try {
+    const usersSnapshot = await db.collection('user').where('fcm_token', '!=', null).get();
+    usersSnapshot.forEach(async userDoc => {
+      const userId = userDoc.id;
+      console.log('----------', userId);
+      const keywordsSnapshots = await db.collection('keyword').where('user_id', '==', userId).get();
+      
+      keywordsSnapshots.forEach(keywordDoc => {
+        const keyword = keywordDoc.data().keyword;
+        console.log('-----------', keyword, '------------------');
+        parsing(keyword).then(informations => {
+          // response.json(informations);
+          console.log(informations);
+        }).catch(err => {
+          console.error(err);
+        });
+      });
+    });
+
+
+
+    response.status(200).json('keywords');
+  } catch (error) {
+    response.status(500).send(`Error getting users: ${error}`);
+  }
+});
 
 exports.fetchNews = onRequest((request, response) => {
   const keyword = request.params[0];

@@ -1,4 +1,4 @@
-09:04:56.571 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
-09:04:56.666 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
-09:05:05.533 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - news-scrap-b64dd-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 63ms, init: 0ms
-09:05:05.558 [NamespaceSystem-blocking-namespace-operation-dispatcher-6] INFO com.firebase.core.namespace.StateManager - Namespace news-scrap-b64dd-default-rtdb status Active to Active
+11:31:38.577 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+11:31:38.666 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
+11:31:47.640 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - news-scrap-b64dd-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 63ms, init: 0ms
+11:31:47.663 [NamespaceSystem-blocking-namespace-operation-dispatcher-6] INFO com.firebase.core.namespace.StateManager - Namespace news-scrap-b64dd-default-rtdb status Active to Active
