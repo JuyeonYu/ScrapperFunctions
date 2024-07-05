@@ -14,7 +14,11 @@ const logger = require("firebase-functions/logger");
 const functions = require('firebase-functions');
 const express = require('express');
 const app = express();
-const parsing = require('./fetchNews');
+const parsing = require('./fetchNewsService');
+const push = require('./pushNotiService');
+
+
+
 
 exports.api = functions.https.onRequest(app);
 
@@ -23,6 +27,7 @@ exports.fetchNews = onRequest((request, response) => {
   if (!keyword) {
     return response.status(400).send({error: 'Keyword is required'});
   }
+  push('eWd4mJo2vU-nib6tPzyDOe:APA91bHyqZquD_pkU0olBsG-ayk8BTiEzrh9ifCuZDayO4VWkMzqoj0qAJkwb9RmIAA9WEh04EobwYQGPh78FKhlBzS2ojnmM_cLt-lqEtSlCSvPwbzBO5RcmpLiYkV6XvTYGi4WacCO');
   parsing(keyword).then(informations => {
     response.json(informations);
   }).catch(err => {
