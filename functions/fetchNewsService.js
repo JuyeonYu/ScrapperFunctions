@@ -1,6 +1,6 @@
 const axios = require("axios"); //특정  URL  삽입 시 URL html 태그 가지고
 const cheerio = require("cheerio");
-var scanf = require('scanf');
+// var scanf = require('scanf');
 
 
 // HTML 코드를 가지고 오는  함수
