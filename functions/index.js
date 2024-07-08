@@ -67,60 +67,59 @@ const initializeFirestore = async () => {
 initializeFirestore();
 
 exports.test = onRequest(async (request, response) => {
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+  const timestampOneHourAgo = oneHourAgo.getTime();
+
   try {
     const usersSnapshot = await db.collection('user').where('fcm_token', '!=', null).get();
-    usersSnapshot.forEach(async userDoc => {
+    for (let userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
       const deviceToken = userDoc.data().fcm_token;
-      console.log('----------', userId);
       const keywordsSnapshots = await db.collection('keyword').where('user_id', '==', userId).get();
-      
-      keywordsSnapshots.forEach(keywordDoc => {
+      let hasNewKeywords = [];
+      for (let keywordDoc of keywordsSnapshots.docs) {
         const keyword = keywordDoc.data().keyword;
-        const pushedTime = keywordDoc.data().pushed_time || 0;
-        console.log('-----------', keyword, '------------------');
-        parsing(keyword).then(async informations => {
-          console.log('-----------', informations['time'], '------------------');
-
-          informations.forEach(async information => {
-            if (information['time'] > pushedTime) {
-              let message = {
-                notification: {
-                  title: `${keyword}에서 새로운 뉴스가 도착했습니다.💛`,
-                  body: information['title'],
-                },
-                token: deviceToken,
-              };
-            
-              try {
-                const response = await admin.messaging().send(message);
-                console.log('Successfully sent message: ', response);
-                // write something on database
-              } catch (err) {
-                console.log('Error sending message: ', err);
-                // write something on database
-              }
-              console.log('---------------push--------------');
-              console.log(information);
-            } else {
-              console.log(`---------------no push--------------`, pushedTime);
-              console.log(information);
+  
+        try {
+          const informations = await parsing(keyword);
+          for (let information of informations) {
+            if (information['time'] > timestampOneHourAgo) {
+              console.log(`pass--------${information['title']}---------------`);
+              hasNewKeywords.push(keyword);
+              break;
             }
-          });
-
-          // response.json(informations);
-          
-          
-        }).catch(err => {
+          }
+        } catch (err) {
           console.error(err);
-        });
-      });
-    });
+        }
+      }
 
+      if (hasNewKeywords.length > 0) {
+        let message = {
+          notification: {
+            title: `등록한 키워드에서 새로운 뉴스가 도착했습니다.`,
+            body: hasNewKeywords.join(', '),
+          },
+          token: deviceToken,
+          data: { keywords: JSON.stringify(hasNewKeywords) }
+        };
+
+        try {
+          const response = await admin.messaging().send(message);
+          console.log('Successfully sent message: ', response);
+        } catch (err) {
+          console.log('Error sending message: ', err);
+        }
+
+        hasNewKeywords = [];
+      }
+    }
+  
     response.status(200).json('keywords');
   } catch (error) {
     response.status(500).send(`Error getting users: ${error}`);
-  }
+  }  
 });
 
 exports.scheduledFunction = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
