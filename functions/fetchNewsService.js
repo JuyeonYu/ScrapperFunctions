@@ -27,6 +27,8 @@ function relativeTimeToTimestamp(relativeTime) {
   } else if (relativeTime.includes('주 전')) {
       const weeksAgo = parseInt(relativeTime);
       currentDate.setDate(currentDate.getDate() - (weeksAgo * 7));
+  } else {
+    return 0;
   }
 
   return currentDate.getTime(); // Timestamp in milliseconds
@@ -53,4 +55,21 @@ const parsing = async (keyword) => {
   return informations; // 정보를 반환합니다.
 }
 
+const hasNews = async (keyword, sinceTimestamp) => {
+  const html = await getHTML(keyword);
+  const $ = cheerio.load(html.data);
+  const $titlist = $(".news_area");
+
+  for (let idx = 0; idx < $titlist.length; idx++) {
+    const $node = $titlist.eq(idx);
+    const timestamp = relativeTimeToTimestamp($node.find(".info_group > span").text());
+    if (timestamp > sinceTimestamp) {
+      console.log($node.find(".news_tit:eq(0)").text(), $node.find(".info_group > span").text(), timestamp, sinceTimestamp);
+      return true;
+    }
+  }
+  return false;
+}
+
 module.exports = parsing;
+module.exports = hasNews;

@@ -19,6 +19,7 @@ const parsing = require('./fetchNewsService');
 const push = require('./pushNotiService');
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const db = admin.firestore();
+const hasNews = require("./fetchNewsService");
 
 exports.api = functions.https.onRequest(app);
 
@@ -248,4 +249,18 @@ exports.fetchNews = onRequest((request, response) => {
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from Firebase!");
+});
+
+app.post('/fetchNewKeywords', async (req, res) => {
+  const fetchSince = req.body.time;
+  const keywords = req.body.keywords.split(',');
+
+  let hasNewsDict = {};
+
+  await Promise.all(keywords.map(async (keyword) => {
+    hasNewsDict[keyword] = await hasNews(keyword, fetchSince);
+  }));
+
+  res.json(hasNewsDict);
+
 });
