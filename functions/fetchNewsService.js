@@ -1,7 +1,5 @@
-const axios = require("axios"); //특정  URL  삽입 시 URL html 태그 가지고
+const axios = require("axios");
 const cheerio = require("cheerio");
-// var scanf = require('scanf');
-
 
 // HTML 코드를 가지고 오는  함수
 const getHTML = async(keyword) => {
@@ -71,5 +69,21 @@ const hasNews = async (keyword, sinceTimestamp) => {
   return false;
 }
 
+const unreadNewsTitle = async (keyword, sinceTimestamp) => {
+  const html = await getHTML(keyword);
+  const $ = cheerio.load(html.data);
+  const $titlist = $(".news_area");
+
+  for (let idx = 0; idx < $titlist.length; idx++) {
+    const $node = $titlist.eq(idx);
+    const timestamp = relativeTimeToTimestamp($node.find(".info_group > span").text());
+    if (timestamp > sinceTimestamp) {
+      return $node.find(".news_tit:eq(0)").text();
+    }
+  }
+  return null;
+}
+
 module.exports = parsing;
 module.exports = hasNews;
+module.exports = unreadNewsTitle;
