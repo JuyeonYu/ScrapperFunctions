@@ -18,14 +18,16 @@ const unreadNewsTitle = require("./fetchNewsService");
 admin.initializeApp();
 const db = admin.firestore();
 
+const batchPeriodMinute = 10
+
 exports.api = functions.https.onRequest(app);
 
 exports.pushEveryHour = onSchedule(
-  "*/10 * * * *", async (event) => {
+  `*/${batchPeriodMinute} * * * *`, async (event) => {
   console.log(`pushEveryHour! ${event.scheduleTime}`);
   console.log(event.scheduleTime);
   const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - (60 * 10 * 1000));
+  const oneHourAgo = new Date(now.getTime() - (60 * batchPeriodMinute * 1000));
   const timestampOneHourAgo = oneHourAgo.getTime();
 
   try {
@@ -54,10 +56,11 @@ exports.pushEveryHour = onSchedule(
       }
 
       if (unreadNewsTitles.length > 0) {
+        const title = hasNewKeywords.length == 1 ? hasNewKeywords[0] : `${hasNewKeywords[0]} 외 ${hasNewKeywords.length - 1}개 키워드`
         const body = unreadNewsTitles.length == 1 ? unreadNewsTitles[0] : `${unreadNewsTitles[0]} 외 ${unreadNewsTitles.length - 1}건`
         const message = {
           notification: {
-            title: keyword,
+            title: title,
             body: body,
           },
           token: deviceToken,
