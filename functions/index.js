@@ -23,6 +23,7 @@ exports.api = functions.https.onRequest(app);
 
 exports.pushEveryHour = onSchedule(
   `*/${batchPeriodMinute} * * * *`, async (event) => {
+    console.log(event.scheduleTime);
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - (60 * batchPeriodMinute * 1000));
   const timestampOneHourAgo = oneHourAgo.getTime();
@@ -51,8 +52,9 @@ exports.pushEveryHour = onSchedule(
 
       if (unreadNewsList.length > 0) {
         const unreadNewsListLength = unreadNewsList.length;
-        const title = unreadNewsListLength == 1 ? unreadNewsList['keyword'] : `${unreadNewsList['keyword']} 외 ${unreadNewsListLength - 1}개 키워드`
-        const body = y ? unreadNewsList['title'] : `${unreadNewsList[0]} 외 ${unreadNewsListLength - 1}건`
+        const hasOneNews = unreadNewsListLength == 1;
+        const title = hasOneNews ? unreadNewsList['keyword'] : `${unreadNewsList['keyword']} 외 ${unreadNewsListLength - 1}개 키워드`
+        const body = hasOneNews ? unreadNewsList['title'] : `${unreadNewsList[0]} 외 ${unreadNewsListLength - 1}건`
         const message = {
           notification: {
             title: title,
@@ -98,7 +100,7 @@ const appCheckMiddleware = async (req, res, next) => {
   }
 };
 
-// app.use(appCheckMiddleware);
+app.use(appCheckMiddleware);
 
 app.post('/unreadNews', async (req, res) => {
   const fetchSince = Number(req.body.time);
