@@ -16,9 +16,9 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const getUnreadNews = require("./fetchNewsService");
 admin.initializeApp();
 const db = admin.firestore();
+app.use(express.json());
 
 const batchPeriodMinute = 10
-
 exports.api = functions.https.onRequest(app);
 
 exports.pushEveryHour = onSchedule(
@@ -114,7 +114,7 @@ app.post('/unreadNews', async (req, res) => {
       try {
         const news = await getUnreadNews(keyword, fetchSince);
         if (news != null) {
-          unreadNewsList.push(news);
+          unreadNewsList.push(keyword);
         }
       } catch (error) {
         res.status(100).json({ error: `Parse Error: ${error.message}` });
@@ -122,6 +122,34 @@ app.post('/unreadNews', async (req, res) => {
     }));
     res.json(unreadNewsList);
   } catch (error) {
+    res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+  }
+});
+
+exports.unreadNewsKeywords = functions.https.onRequest(async (req, res) => {
+  const data = req.body.data;
+  const newsList = data.news;
+  const fetchSince = data.timestamp;
+
+  const hasNewsKeywords = [];
+  const keywords = newsList.map(function(element) {
+    return `${element.keyword}`;
+});
+
+  try {
+    await Promise.all(keywords.map(async (keyword) => {
+      try {
+        const news = await getUnreadNews(keyword, fetchSince);
+        if (news != null) {
+          hasNewsKeywords.push(keyword);
+        }
+      } catch (error) {
+        res.status(100).json({ error: `Parse Error: ${error.message}` });
+      }
+    }));
+    res.json({data: hasNewsKeywords});
+  } catch (error) {
+    console.log(error.message);
     res.status(500).json({ error: `Internal Server Error: ${error.message}` });
   }
 });
