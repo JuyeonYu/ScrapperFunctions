@@ -38,52 +38,29 @@ const parsing = async (keyword) => {
   const $ = cheerio.load(html.data); // 가지고 오는 data load
   const $titlist = $(".news_area");
 
-  let informations = [];
+  let newsList = [];
   $titlist.each((idx, node) => {
     const timestamp = relativeTimeToTimestamp($(node).find(".info_group > span").text());
-    informations.push({
-      title: $(node).find(".news_tit:eq(0)").text(), // 뉴스제목 크롤링
-      // press: $(node).find(".info_group > a").text(), // 출판사 크롤링
-      time: timestamp, // 기사 작성 시간 크롤링
-      pubData: $(node).find(".info_group > span").text()
-      // contents: $(node).find(".dsc_wrap").text(), // 기사 내용 크롤링
+    newsList.push({
+      title: $(node).find(".news_tit:eq(0)").text(), // 제목
+      link: $(node).find(".news_tit:eq(0)").attr('href'), // 링크
+      press: $(node).find(".info_group > a").text(), // 출판사
+      timestamp: timestamp, // 작성 시간 타임스탬사
+      pubData: $(node).find(".info_group > span").text(), // 작성 시간 '1분 전' 포멧
+      contents: $(node).find(".dsc_wrap").text(), // 내용
     });
   });
 
-  return informations; // 정보를 반환합니다.
+  return newsList;
 }
 
-const hasNews = async (keyword, sinceTimestamp) => {
-  const html = await getHTML(keyword);
-  const $ = cheerio.load(html.data);
-  const $titlist = $(".news_area");
-
-  for (let idx = 0; idx < $titlist.length; idx++) {
-    const $node = $titlist.eq(idx);
-    const timestamp = relativeTimeToTimestamp($node.find(".info_group > span").text());
-    if (timestamp > sinceTimestamp) {
-      console.log($node.find(".news_tit:eq(0)").text(), $node.find(".info_group > span").text(), timestamp, sinceTimestamp);
-      return true;
+const getUnreadNews = async (keyword, sinceTimestamp) => {
+  const newsList = await parsing(keyword);
+  for (news of newsList) {
+    if (news['timestamp'] > sinceTimestamp) {
+      return {'keyword': keyword, 'title': news['title'], 'link': news['link']};
     }
   }
-  return false;
 }
 
-const unreadNewsTitle = async (keyword, sinceTimestamp) => {
-  const html = await getHTML(keyword);
-  const $ = cheerio.load(html.data);
-  const $titlist = $(".news_area");
-
-  for (let idx = 0; idx < $titlist.length; idx++) {
-    const $node = $titlist.eq(idx);
-    const timestamp = relativeTimeToTimestamp($node.find(".info_group > span").text());
-    if (timestamp > sinceTimestamp) {
-      return $node.find(".news_tit:eq(0)").text();
-    }
-  }
-  return null;
-}
-
-module.exports = parsing;
-module.exports = hasNews;
-module.exports = unreadNewsTitle;
+module.exports = getUnreadNews;
