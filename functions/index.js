@@ -13,8 +13,7 @@ const express = require('express');
 const app = express();
 const admin = require('firebase-admin');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const hasNews = require("./fetchNewsService");
-const unreadNewsTitle = require("./fetchNewsService");
+const getUnreadNews = require("./fetchNewsService");
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -24,8 +23,6 @@ exports.api = functions.https.onRequest(app);
 
 exports.pushEveryHour = onSchedule(
   `*/${batchPeriodMinute} * * * *`, async (event) => {
-  console.log(`pushEveryHour! ${event.scheduleTime}`);
-  console.log(event.scheduleTime);
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - (60 * batchPeriodMinute * 1000));
   const timestampOneHourAgo = oneHourAgo.getTime();
@@ -37,27 +34,25 @@ exports.pushEveryHour = onSchedule(
       const userId = userDoc.id;
       const deviceToken = userDoc.data().fcm_token;
       const keywordsSnapshots = await db.collection('keyword').where('user_id', '==', userId).get();
-      let hasNewKeywords = [];
-      let unreadNewsTitles = [];
+      let unreadNewsList = [];
 
       for (let keywordDoc of keywordsSnapshots.docs) {
         const keyword = keywordDoc.data().keyword;
 
         try {
-          const title = await unreadNewsTitle(keyword, timestampOneHourAgo);
-          if (title != null) {
-            console.log(`새로운 뉴스가 발견되었습니다. 키워드: ${keyword}`);
-            hasNewKeywords.push(keyword);
-            unreadNewsTitles.push(title)
+          const news = await getUnreadNews(keyword, timestampOneHourAgo);
+          if (news != null) {
+            unreadNewsList.push(news);
           }
         } catch (err) {
           console.error(`키워드 검색 중 오류 발생: ${err}`);
         }
       }
 
-      if (unreadNewsTitles.length > 0) {
-        const title = hasNewKeywords.length == 1 ? hasNewKeywords[0] : `${hasNewKeywords[0]} 외 ${hasNewKeywords.length - 1}개 키워드`
-        const body = unreadNewsTitles.length == 1 ? unreadNewsTitles[0] : `${unreadNewsTitles[0]} 외 ${unreadNewsTitles.length - 1}건`
+      if (unreadNewsList.length > 0) {
+        const unreadNewsListLength = unreadNewsList.length;
+        const title = unreadNewsListLength == 1 ? unreadNewsList['keyword'] : `${unreadNewsList['keyword']} 외 ${unreadNewsListLength - 1}개 키워드`
+        const body = y ? unreadNewsList['title'] : `${unreadNewsList[0]} 외 ${unreadNewsListLength - 1}건`
         const message = {
           notification: {
             title: title,
@@ -65,7 +60,7 @@ exports.pushEveryHour = onSchedule(
           },
           token: deviceToken,
           data: {
-            keywords: JSON.stringify(hasNewKeywords)
+            keywords: JSON.stringify(unreadNewsListLength == 1 ? unreadNewsList['link'] : null)
           }
         };
 
@@ -75,8 +70,6 @@ exports.pushEveryHour = onSchedule(
         } catch (err) {
           console.error('푸시 알림 전송 실패:', err);
         }
-
-        hasNewKeywords = [];
       }
     }
 
@@ -105,28 +98,29 @@ const appCheckMiddleware = async (req, res, next) => {
   }
 };
 
-app.use(appCheckMiddleware);
+// app.use(appCheckMiddleware);
 
-app.post('/fetchNewKeywords', async (req, res) => {
-  const fetchSince = req.body.time;
+app.post('/unreadNews', async (req, res) => {
+  const fetchSince = Number(req.body.time);
   const keywords = req.body.keywords.split(',');
 
   if (!fetchSince || !Array.isArray(keywords) || keywords.length === 0) {
     return res.status(400).json({ error: 'Invalid input' });
   }
-
-  let hasNewsDict = {};
+  let unreadNewsList = [];
 
   try {
     await Promise.all(keywords.map(async (keyword) => {
       try {
-        hasNewsDict[keyword] = await hasNews(keyword, fetchSince);
+        const news = await getUnreadNews(keyword, fetchSince);
+        if (news != null) {
+          unreadNewsList.push(news);
+        }
       } catch (error) {
-        hasNewsDict[keyword] = { error: error.message };
+        res.status(100).json({ error: `Parse Error: ${error.message}` });
       }
     }));
-
-    res.json(hasNewsDict);
+    res.json(unreadNewsList);
   } catch (error) {
     res.status(500).json({ error: `Internal Server Error: ${error.message}` });
   }
