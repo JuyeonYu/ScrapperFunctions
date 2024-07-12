@@ -56,9 +56,10 @@ const parsing = async (keyword) => {
 
 const getUnreadNews = async (keyword, sinceTimestamp) => {
   const newsList = await parsing(keyword);
-  for (news of newsList) {
-    if (news['timestamp'] > sinceTimestamp) {
-      return {'keyword': keyword, 'title': news['title'], 'link': news['link']};
+  for (var news of newsList) {
+    if (Number(news['timestamp']) > Number(sinceTimestamp)) {
+      console.log(sinceTimestamp, Number(news['timestamp']), news['']);
+      return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubData': news['pubData'] };
     }
   }
 }
