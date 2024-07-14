@@ -102,47 +102,19 @@ const appCheckMiddleware = async (req, res, next) => {
 
 app.use(appCheckMiddleware);
 
-app.post('/unreadNews', async (req, res) => {
-  const fetchSince = Number(req.body.time);
-  const keywords = req.body.keywords.split(',');
-
-  if (!fetchSince || !Array.isArray(keywords) || keywords.length === 0) {
-    return res.status(400).json({ error: 'Invalid input' });
-  }
-  let unreadNewsList = [];
-
-  try {
-    await Promise.all(keywords.map(async (keyword) => {
-      try {
-        const news = await getUnreadNews(keyword, fetchSince);
-        if (news != null) {
-          unreadNewsList.push(news);
-        }
-      } catch (error) {
-        res.status(100).json({ error: `Parse Error: ${error.message}` });
-      }
-    }));
-    res.json(unreadNewsList);
-  } catch (error) {
-    res.status(500).json({ error: `Internal Server Error: ${error.message}` });
-  }
-});
-
-exports.unreadNewsKeywords = functions.https.onRequest(async (req, res) => {
+async function GetUnreadNews(req, res) {
   const data = req.body.data;
   const newsList = data.news;
-  const fetchSince = data.timestamp;
-
+  
   const hasNewsKeywords = [];
-  const keywords = newsList.map(function(element) {
-    return `${element.keyword}`;
-});
 
   try {
-    await Promise.all(keywords.map(async (keyword) => {
+    await Promise.all(newsList.map(async (news) => {
       try {
-        const news = await getUnreadNews(keyword, fetchSince);
-        if (news != null) {
+        let keyword = news['keyword'];
+        let fetchSince = news['timestamp'];
+        const unreadNews = await getUnreadNews(keyword, fetchSince);
+        if (unreadNews != null) {
           hasNewsKeywords.push(keyword);
         }
       } catch (error) {
@@ -154,4 +126,12 @@ exports.unreadNewsKeywords = functions.https.onRequest(async (req, res) => {
     console.log(error.message);
     res.status(500).json({ error: `Internal Server Error: ${error.message}` });
   }
+}
+
+
+exports.unreadNewsKeywords = functions.https.onRequest(async (req, res) => {
+  await GetUnreadNews(res, req);
 });
+
+// for test
+app.post('/unreadNews2', GetUnreadNews);
