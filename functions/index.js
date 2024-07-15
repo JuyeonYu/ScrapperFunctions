@@ -39,7 +39,7 @@ exports.pushBatch = onSchedule(
 
       for (let keywordDoc of keywordsSnapshots.docs) {
         const keyword = keywordDoc.data().keyword;
-        const exceptionKeyword = keywordDoc.data().except_keyword;
+        const exceptionKeyword = keywordDoc.data().exception_keyword;
 
         try {
           const news = await getUnreadNews(keyword, exceptionKeyword, timestampOneHourAgo);
@@ -130,9 +130,41 @@ async function GetUnreadNews(req, res) {
   }
 }
 
+async function GetUnreadNewsOnCall(data) {
+  const newsList = data.news;
+  
+  const hasNewsKeywords = [];
 
-exports.unreadNewsKeywords = functions.https.onRequest(async (req, res) => {
-  await GetUnreadNews(res, req);
+  try {
+    await Promise.all(newsList.map(async (news) => {
+      try {
+        let keyword = news['keyword'];
+        let fetchSince = news['last_read_t'];
+        let exceptionKeyword = news['exception_keyword'];
+        const unreadNews = await getUnreadNews(keyword, exceptionKeyword, fetchSince);
+        console.log(unreadNews);
+        if (unreadNews != null) {
+          hasNewsKeywords.push(keyword);
+        }
+      } catch (error) {
+        throw new functions.https.HttpsError(
+          'invalid-argument', 
+          'The function must be called with one argument "text".'
+        );
+      }
+    }));
+    return hasNewsKeywords;
+  } catch (error) {
+    console.log(error.message);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Internal Server Error: ${error.message}`
+    );
+  }
+}
+
+exports.unreadNewsKeywords = functions.https.onCall(async (data, context) => {
+    return GetUnreadNewsOnCall(data);
 });
 
 // for test
