@@ -57,8 +57,11 @@ const parsing = async (keyword) => {
 const getUnreadNews = async (keyword, exceptionKeyword, sinceTimestamp) => {
   const newsList = await parsing(keyword);
   for (var news of newsList) {
-    if (Number(news['timestamp']) > Number(sinceTimestamp) && !news['title'].includes(exceptionKeyword)) {
-      console.log(sinceTimestamp, Number(news['timestamp']), news['']);
+    const title = news['title'];
+    const newPubTimestamp = Number(news['timestamp']);
+    const sinceTimestampMil = Number(sinceTimestamp) * 1000;
+    
+    if (newPubTimestamp > sinceTimestampMil && !title.includes(exceptionKeyword)) {
       return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubData': news['pubData'] };
     }
   }
