@@ -21,7 +21,7 @@ app.use(express.json());
 const batchPeriodMinute = 60
 exports.api = functions.https.onRequest(app);
 
-exports.pushEveryHour = onSchedule(
+exports.pushBatch = onSchedule(
   `*/${batchPeriodMinute} * * * *`, async (event) => {
     console.log(event.scheduleTime);
   const now = new Date();
@@ -112,7 +112,7 @@ async function GetUnreadNews(req, res) {
     await Promise.all(newsList.map(async (news) => {
       try {
         let keyword = news['keyword'];
-        let fetchSince = news['timestamp'];
+        let fetchSince = news['last_read_t'];
         const unreadNews = await getUnreadNews(keyword, fetchSince);
         if (unreadNews != null) {
           hasNewsKeywords.push(keyword);
