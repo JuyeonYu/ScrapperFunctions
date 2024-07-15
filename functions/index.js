@@ -39,9 +39,10 @@ exports.pushBatch = onSchedule(
 
       for (let keywordDoc of keywordsSnapshots.docs) {
         const keyword = keywordDoc.data().keyword;
+        const exceptionKeyword = keywordDoc.data().except_keyword;
 
         try {
-          const news = await getUnreadNews(keyword, timestampOneHourAgo);
+          const news = await getUnreadNews(keyword, exceptionKeyword, timestampOneHourAgo);
           if (news != null) {
             unreadNewsList.push(news);
           }
@@ -113,7 +114,8 @@ async function GetUnreadNews(req, res) {
       try {
         let keyword = news['keyword'];
         let fetchSince = news['last_read_t'];
-        const unreadNews = await getUnreadNews(keyword, fetchSince);
+        let exceptionKeyword = news['exception_keyword'];
+        const unreadNews = await getUnreadNews(keyword, exceptionKeyword, fetchSince);
         if (unreadNews != null) {
           hasNewsKeywords.push(keyword);
         }
