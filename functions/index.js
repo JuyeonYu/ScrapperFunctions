@@ -113,7 +113,8 @@ async function GetUnreadNews(req, res) {
       try {
         let keyword = news['keyword'];
         let fetchSince = news['last_read_t'];
-        const unreadNews = await getUnreadNews(keyword, fetchSince);
+        let exceptionKeyword = news['exception_keyword'];
+        const unreadNews = await getUnreadNews(keyword, exceptionKeyword, fetchSince);
         if (unreadNews != null) {
           hasNewsKeywords.push(keyword);
         }
