@@ -60,8 +60,8 @@ const getUnreadNews = async (keyword, exceptionKeyword, sinceTimestamp) => {
     const title = news['title'];
     const newPubTimestamp = Number(news['timestamp']);
     const sinceTimestampMil = Number(sinceTimestamp) * 1000;
-    
-    if (newPubTimestamp > sinceTimestampMil && !title.includes(exceptionKeyword)) {
+
+    if (newPubTimestamp > sinceTimestampMil && !exceptionKeyword && (exceptionKeyword == '' || !title.includes(exceptionKeyword))) {
       return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubData': news['pubData'] };
     }
   }
