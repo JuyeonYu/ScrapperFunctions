@@ -7,8 +7,8 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v2');
+const { HttpsError } = require('firebase-functions/v2/https');
 const express = require('express');
 const app = express();
 const admin = require('firebase-admin');
@@ -19,7 +19,7 @@ const db = admin.firestore();
 app.use(express.json());
 
 const batchPeriodMinute = 60
-exports.api = functions.https.onRequest(app);
+// exports.api = functions.https.onRequest(app);
 
 exports.pushBatch = onSchedule(
   `*/${batchPeriodMinute} * * * *`, async (event) => {
@@ -103,36 +103,8 @@ const appCheckMiddleware = async (req, res, next) => {
 
 app.use(appCheckMiddleware);
 
-async function GetUnreadNews(req, res) {
-  const data = req.body.data;
-  const newsList = data.news;
-  
-  const hasNewsKeywords = [];
 
-  try {
-    await Promise.all(newsList.map(async (news) => {
-      try {
-        let keyword = news['keyword'];
-        let fetchSince = news['last_read_t'];
-        let exceptionKeyword = news['exception_keyword'];
-        const unreadNews = await getUnreadNews(keyword, exceptionKeyword, fetchSince);
-        if (unreadNews != null) {
-          hasNewsKeywords.push(keyword);
-        }
-      } catch (error) {
-        res.status(100).json({ error: `Parse Error: ${error.message}` });
-      }
-    }));
-    res.json({data: hasNewsKeywords});
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ error: `Internal Server Error: ${error.message}` });
-  }
-}
-
-async function GetUnreadNewsOnCall(data) {
-  const newsList = data.news;
-  
+async function GetUnreadNewsOnCall(newsList) {  
   const hasNewsKeywords = [];
 
   try {
@@ -149,10 +121,11 @@ async function GetUnreadNewsOnCall(data) {
       } catch (error) {
         throw new functions.https.HttpsError(
           'invalid-argument', 
-          'The function must be called with one argument "text".'
+          `The function must be called with one argument text error: ${error.message}".`
         );
       }
     }));
+    console.log(`-----no error------`);
     return hasNewsKeywords;
   } catch (error) {
     console.log(error.message);
@@ -164,8 +137,14 @@ async function GetUnreadNewsOnCall(data) {
 }
 
 exports.unreadNewsKeywords = functions.https.onCall(async (data, context) => {
-    return GetUnreadNewsOnCall(data);
+  // 왜 data.data로 접근해야하는건지...?
+  console.log(`--------unreadNewsKeywords: ${data.data.news}---------`);
+  const newsList = data.data.news;
+  if (!Array.isArray(newsList)) {
+    throw new HttpsError('invalid argument', 'The news argument must be array.');
+  }
+  if (!context.auth) {
+    throw new HttpsError('unauthenticated', 'Request not authenticated');
+  }
+    return GetUnreadNewsOnCall(newsList);
 });
-
-// for test
-app.post('/unreadNews2', GetUnreadNews);
