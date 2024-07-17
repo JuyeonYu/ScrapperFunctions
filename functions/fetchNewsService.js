@@ -65,6 +65,7 @@ const getUnreadNews = async (keyword, exceptionKeyword, sinceTimestamp) => {
       return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubData': news['pubData'] };
     }
   }
+  return null;
 }
 
 module.exports = getUnreadNews;

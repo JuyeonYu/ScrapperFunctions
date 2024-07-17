@@ -14,6 +14,8 @@ const app = express();
 const admin = require('firebase-admin');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const getUnreadNews = require("./fetchNewsService");
+const { onCall } = require('firebase-functions/v2/https');
+
 admin.initializeApp();
 const db = admin.firestore();
 app.use(express.json());
@@ -103,7 +105,6 @@ const appCheckMiddleware = async (req, res, next) => {
 
 app.use(appCheckMiddleware);
 
-
 async function GetUnreadNewsOnCall(newsList) {
   console.log('GetUnreadNewsOnCall called');
   const hasNewsKeywords = [];
@@ -121,30 +122,50 @@ async function GetUnreadNewsOnCall(newsList) {
           hasNewsKeywords.push(keyword);
         }
       } catch (error) {
-        console.log(`-----------------unreadNews1 error: ${error.messsage}------------------`);
-        throw new functions.https.HttpsError(
-          'invalid-argument', 
-          `The function must be called with one argument text error: ${error.message}".`
-        );
+        console.log(`-----------------unreadNews1 error: ${error.message}------------------`);
       }
     }));
     console.log(`-----no error------`);
     return hasNewsKeywords;
   } catch (error) {
-        console.log(`-----------------unreadNews2 error: ${error.messsage}------------------`);
-    throw new functions.https.HttpsError(
+    console.log(`-----------------unreadNews2 error: ${error.message}------------------`);
+    throw new HttpsError(
       'internal',
       `Internal Server Error: ${error.message}`
     );
   }
 }
 
-exports.unreadNewsKeywords = functions.https.onCall(async (data, context) => {
 
-  const newsList = data.data.news;
+
+/* eslint-disable no-unused-vars */
+
+exports.test = functions.https.onCall((data, _) => {
+  return `${data.data.test} done`
+}); 
+
+
+exports.unreadNewsKeywords = onCall(async (data) => {
+  try {
+    const newsList = data.data.news; // 데이터에서 news 리스트를 가져옵니다.
     if (!Array.isArray(newsList)) {
-      throw new HttpsError('invalid argument', 'The news argument must be array.');
+      throw new HttpsError('invalid-argument', 'The news argument must be an array.');
     }
-    console.log(context);
-    return GetUnreadNewsOnCall(newsList);
+
+    console.log(newsList);
+
+    if (!newsList) {
+      console.log('no new');
+      return []; // 빈 배열을 반환
+    }
+
+    const unreadNews = await GetUnreadNewsOnCall(newsList);
+    return unreadNews; // 결과 반환
+  } catch (error) {
+    console.error('Failed to get unread news:', error);
+    throw new HttpsError('internal', 'An internal error occurred.', error);
+  }
 });
+
+
+/* eslint-enable no-unused-vars */
