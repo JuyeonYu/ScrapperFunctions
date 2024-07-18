@@ -1,7 +1,6 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-// HTML 코드를 가지고 오는  함수
 const getHTML = async(keyword) => {
   try{
     return await axios.get("https://search.naver.com/search.naver?where=news&ie=UTF-8&query=" + encodeURI(keyword)) //""안에는 URL 삽입
@@ -32,10 +31,10 @@ function relativeTimeToTimestamp(relativeTime) {
   return currentDate.getTime(); // Timestamp in milliseconds
 }
 
- // 파싱 함수
 const parsing = async (keyword) => {
+  console.log(`--------------parsing: ${keyword}------------------`);
   const html = await getHTML(keyword);
-  const $ = cheerio.load(html.data); // 가지고 오는 data load
+  const $ = cheerio.load(html.data);
   const $titlist = $(".news_area");
 
   let newsList = [];
@@ -45,7 +44,7 @@ const parsing = async (keyword) => {
       title: $(node).find(".news_tit:eq(0)").text(), // 제목
       link: $(node).find(".news_tit:eq(0)").attr('href'), // 링크
       press: $(node).find(".info_group > a").text(), // 출판사
-      timestamp: timestamp, // 작성 시간 타임스탬사
+      timestamp: timestamp, // 작성 시간 타임스탬프
       pubData: $(node).find(".info_group > span").text(), // 작성 시간 '1분 전' 포멧
       contents: $(node).find(".dsc_wrap").text(), // 내용
     });
@@ -55,16 +54,23 @@ const parsing = async (keyword) => {
 }
 
 const getUnreadNews = async (keyword, exceptionKeyword, sinceTimestamp) => {
+  console.log(`${keyword} / ${exceptionKeyword} / ${sinceTimestamp}`);
+
   const newsList = await parsing(keyword);
+  console.log(newsList.length);
   for (var news of newsList) {
+    console.log(`${news}`);
     const title = news['title'];
     const newPubTimestamp = Number(news['timestamp']);
     const sinceTimestampMil = Number(sinceTimestamp);
 
+    console.log(`${newPubTimestamp} / ${sinceTimestampMil} / ${newPubTimestamp > sinceTimestampMil} / ${title} / ${exceptionKeyword} / ${!exceptionKeyword} / ${!title.includes(exceptionKeyword)}`);
     if (newPubTimestamp > sinceTimestampMil && !exceptionKeyword && (exceptionKeyword == '' || !title.includes(exceptionKeyword))) {
+      console.log(`added! ${news['title']}`);
       return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubData': news['pubData'] };
     }
   }
+  console.log('no added');
   return null;
 }
 
