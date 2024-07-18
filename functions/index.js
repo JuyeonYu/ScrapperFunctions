@@ -20,10 +20,10 @@ admin.initializeApp();
 const db = admin.firestore();
 app.use(express.json());
 
-const batchPeriodMinute = 60
+const batchPeriodMinute = 10
 // exports.api = functions.https.onRequest(app);
 
-exports.pushBatch = onSchedule(
+exports.pushFCM = onSchedule(
   `*/${batchPeriodMinute} * * * *`, async (event) => {
     console.log(event.scheduleTime);
   const now = new Date();
@@ -65,7 +65,7 @@ exports.pushBatch = onSchedule(
           },
           token: deviceToken,
           data: {
-            keywords: JSON.stringify(unreadNewsListLength == 1 ? unreadNewsList['link'] : null)
+            keywords: JSON.stringify(unreadNewsListLength == 1 ? unreadNewsList[0]['link'] : null)
           }
         };
 
