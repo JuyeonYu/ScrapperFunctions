@@ -14,6 +14,7 @@ const app = express();
 const admin = require('firebase-admin');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const getUnreadNews = require("./fetchNewsService");
+const parse = require("./fetchNewsService");
 const { onCall } = require('firebase-functions/v2/https');
 
 admin.initializeApp();
@@ -256,8 +257,6 @@ async function GetUnreadNewsOnCall(newsList) {
   }
 }
 
-
-
 /* eslint-disable no-unused-vars */
 
 exports.unreadNewsKeywords = onCall(async (data) => {
@@ -282,5 +281,32 @@ exports.unreadNewsKeywords = onCall(async (data) => {
   }
 });
 
+exports.feed = onCall(async (data, context) => {
+  try {
+    if (data.auth.uid == null) {
+      return null;
+    } else if (data.data) {
+      const keywords = JSON.parse(data.data);
+      const links = [];
+      try {
+        await Promise.all(keywords.map(async (keyword) => {
+          const newsDicts = await parse(keyword);
+          for (let newsDict of newsDicts) {
+            if (newsDict['link'] != null) {
+              links.push(newsDict['link']);
+            }
+          }
+        }))
+      } catch(error) {
+        console.error(error);
+      }
+      return JSON.stringify(links);
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to get unread news:', error);
+    throw new HttpsError('internal', 'An internal error occurred.', error);
+  }
+});
 
 /* eslint-enable no-unused-vars */
