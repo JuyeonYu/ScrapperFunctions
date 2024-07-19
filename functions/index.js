@@ -92,6 +92,12 @@ exports.pushFCM = onSchedule(
         console.log(`0-----------${keywordDoc.data()}---------------`);
         const keyword = keywordDoc.data().keyword;
         const exceptionKeyword = keywordDoc.data().exception_keyword ?? null;
+        const notiEnable = keywordDoc.data().noti_enable ?? false;
+
+        if (!notiEnable) {
+          continue;
+        }
+        
         console.log(`1-----------${keyword} / ${exceptionKeyword}---------------`);
         try {
           const news = await getUnreadNews(keyword, exceptionKeyword, timestampOneHourAgo);
