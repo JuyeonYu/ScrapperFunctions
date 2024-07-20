@@ -76,5 +76,7 @@ const getUnreadNews = async (keyword, exceptionKeyword, sinceTimestamp) => {
 
 
 
-module.exports = getUnreadNews;
-module.exports = parsing;
+module.exports = {
+  getUnreadNews,
+  parsing
+};

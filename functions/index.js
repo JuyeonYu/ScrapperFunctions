@@ -13,8 +13,9 @@ const express = require('express');
 const app = express();
 const admin = require('firebase-admin');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const getUnreadNews = require("./fetchNewsService");
-const parse = require("./fetchNewsService");
+const { getUnreadNews, parsing } = require('./fetchNewsService');
+
+
 const { onCall } = require('firebase-functions/v2/https');
 
 admin.initializeApp();
@@ -296,7 +297,7 @@ exports.feed = onCall(async (data, context) => {
       const links = [];
       try {
         await Promise.all(keywords.map(async (keyword) => {
-          const newsDicts = await parse(keyword);
+          const newsDicts = await parsing(keyword);
           for (let newsDict of newsDicts) {
             if (newsDict['link'] != null) {
               links.push(newsDict['link']);
