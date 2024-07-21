@@ -45,10 +45,12 @@ const parsing = async (keyword) => {
       link: $(node).find(".news_tit:eq(0)").attr('href'), // 링크
       press: $(node).find(".info_group > a").text(), // 출판사
       timestamp: timestamp, // 작성 시간 타임스탬프
-      pubData: $(node).find(".info_group > span").text(), // 작성 시간 '1분 전' 포멧
-      contents: $(node).find(".dsc_wrap").text(), // 내용
+      pubDate: $(node).find(".info_group > span").text(), // 작성 시간 '1분 전' 포멧
+      description: $(node).find(".dsc_wrap").text(), // 내용
     });
   });
+
+  // console.log(newsList);
 
   return newsList;
 }
@@ -67,7 +69,7 @@ const getUnreadNews = async (keyword, exceptionKeyword, sinceTimestamp) => {
     console.log(`${newPubTimestamp} / ${sinceTimestampMil} / ${newPubTimestamp > sinceTimestampMil} / ${title} / ${exceptionKeyword} / ${!exceptionKeyword} / ${!title.includes(exceptionKeyword)}`);
     if (newPubTimestamp > sinceTimestampMil && !exceptionKeyword && (exceptionKeyword == '' || !title.includes(exceptionKeyword))) {
       console.log(`added! ${news['title']}`);
-      return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubData': news['pubData'] };
+      return {'keyword': keyword, 'title': news['title'], 'link': news['link'], 'timestamp': news['timestamp'], 'pubDate': news['pubDate'] };
     }
   }
   console.log('no added');

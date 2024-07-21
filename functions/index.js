@@ -294,20 +294,16 @@ exports.feed = onCall(async (data, context) => {
       return null;
     } else if (data.data) {
       const keywords = JSON.parse(data.data);
-      const links = [];
+      let newsDicts = [];
       try {
         await Promise.all(keywords.map(async (keyword) => {
-          const newsDicts = await parsing(keyword);
-          for (let newsDict of newsDicts) {
-            if (newsDict['link'] != null) {
-              links.push(newsDict['link']);
-            }
-          }
+          newsDicts = await parsing(keyword);
         }))
       } catch(error) {
         console.error(error);
       }
-      return JSON.stringify(links);
+      console.log(`return: ${newsDicts}`);
+      return JSON.stringify(newsDicts);
     }
     return null;
   } catch (error) {
