@@ -288,12 +288,23 @@ exports.unreadNewsKeywords = onCall(async (data) => {
   }
 });
 
-exports.feed = onCall(async (data, context) => {
+exports.feed = onCall(async (req) => {
   try {
+    let keywords;
+    const reqJson = JSON.parse(req.data);
+    
+    const version = reqJson.version ? reqJson.version.split('.', 3) : [3, 0, 2];
+
+    const targetVersion = [3, 0, 2];
+    if (Number(version[0]) <= Number(targetVersion[0]) && Number(version[1]) <= Number(targetVersion[1]) && Number(version[2]) <= Number(targetVersion[2])) {
+      keywords = reqJson;
+    } else {
+      keywords = reqJson.keywords;
+    }
+
     if (data.auth.uid == null) {
       return null;
     } else if (data.data) {
-      const keywords = JSON.parse(data.data);
       let newsDicts = [];
       try {
         await Promise.all(keywords.map(async (keyword) => {
