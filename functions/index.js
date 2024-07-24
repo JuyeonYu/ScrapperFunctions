@@ -297,7 +297,9 @@ exports.feed = onCall(async (data, context) => {
       let newsDicts = [];
       try {
         await Promise.all(keywords.map(async (keyword) => {
-          newsDicts = await parsing(keyword);
+          const news = await parsing(keyword);
+          let dict = {'keyword': keyword, 'items': news};
+          newsDicts.push(dict)
         }))
       } catch(error) {
         console.error(error);
