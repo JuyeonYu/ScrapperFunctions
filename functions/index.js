@@ -302,15 +302,20 @@ exports.feed = onCall(async (req) => {
       keywords = reqJson.keywords;
     }
 
-    if (data.auth.uid == null) {
+    if (req.auth.uid == null) {
       return null;
-    } else if (data.data) {
+    } else if (keywords) {
       let newsDicts = [];
       try {
         await Promise.all(keywords.map(async (keyword) => {
           const news = await parsing(keyword);
-          let dict = {'keyword': keyword, 'items': news};
-          newsDicts.push(dict)
+          if (Number(version[0]) <= Number(targetVersion[0]) && Number(version[1]) <= Number(targetVersion[1]) && Number(version[2]) <= Number(targetVersion[2])) {
+            newsDicts = news;
+          } else {
+            let dict = {'keyword': keyword, 'items': news};
+            newsDicts.push(dict)
+          }
+          
         }))
       } catch(error) {
         console.error(error);
