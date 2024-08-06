@@ -302,6 +302,8 @@ exports.feed = onCall(async (req) => {
       keywords = reqJson.keywords;
     }
 
+    keywords = shuffleArray(keywords).slice(0, 8);
+
     if (req.auth.uid == null) {
       return null;
     } else if (keywords) {
@@ -329,5 +331,16 @@ exports.feed = onCall(async (req) => {
     throw new HttpsError('internal', 'An internal error occurred.', error);
   }
 });
+
+function shuffleArray(array) {
+  let shuffledArray = array.slice(); // 원본 배열을 변경하지 않으려면 이 줄을 사용합니다.
+  
+  for (let i = shuffledArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+  }
+  
+  return shuffledArray;
+}
 
 /* eslint-enable no-unused-vars */

@@ -39,6 +39,9 @@ const parsing = async (keyword) => {
 
   let newsList = [];
   $titlist.each((idx, node) => {
+    if (newsList.length >= 3) {
+      return false;
+    }
     const timestamp = relativeTimeToTimestamp($(node).find(".info_group > span").text());
     newsList.push({
       title: $(node).find(".news_tit:eq(0)").text(), // 제목
