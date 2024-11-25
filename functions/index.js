@@ -22,7 +22,7 @@ admin.initializeApp();
 const db = admin.firestore();
 app.use(express.json());
 
-const batchPeriodMinute = 30
+const batchPeriodMinute = 5
 // exports.api = functions.https.onRequest(app);
 
 // const initializeFirestore = async () => {
